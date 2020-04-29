@@ -56,6 +56,7 @@ LOCAL msg:MSG
 LOCAL hProcessSnap:HANDLE 
 LOCAL process:PROCESSENTRY32
 
+						INVOKE			Sleep, 10000																						;small break to wait until all processes will be launched (prevents duplicates during windows startup)
 						INVOKE			CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, 0							;snapshot of all running processes
 						mov				hProcessSnap, eax
 						mov				process.dwSize, SIZEOF process
@@ -75,12 +76,14 @@ LoopOverProc:
 						jmp				LoopOverProc																						
 LaunchExe:		
 						call				LaunchLogger
-MessagePump:  
-						INVOKE			PeekMessage, ADDR msg, 0, 0, 0, 0
+MessagePump:																																;loop to keep alive	
 						INVOKE			GetExitCodeProcess, launchedProcessInfo.hProcess, ADDR exitCode		;check if logger is running
 						cmp				exitCode, STILL_ACTIVE
-						je					MessagePump																					;loop to keep alive	
+						je					SleepTime																					
 						call				LaunchLogger
+						jmp				SleepTime
+SleepTime:				
+						INVOKE			Sleep, 10000																						;sleep to prevent perfomance overhead due to constant process checks
 						jmp				MessagePump
 
 WinMain ENDP

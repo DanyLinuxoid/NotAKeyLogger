@@ -100,8 +100,14 @@ LOCAL				msg:MSG
 
 					    INVOKE			InstallHook, hInstance
 MessagePump:  
-						INVOKE			PeekMessage, ADDR msg, 0, 0, 0, 0
+						INVOKE			GetMessage, ADDR msg, NULL, 0, 0
+						cmp				eax, 0
+						je					MessageEnd
+						INVOKE			TranslateMessage, ADDR msg
+						INVOKE			DispatchMessage, ADDR msg
 						jmp				MessagePump																					;loop to keep alive	
+MessageEnd:    
+					    ret
 
 WinMain ENDP
 
