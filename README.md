@@ -10,7 +10,10 @@ Writes itself in registry(autostartup), then intercepts user pressed keys and wr
 --- Second program is "KeyLoggerMonitor", manager/monitor for "NotAKeyLogger". 
 This program is needed to watch after "NotAKeyLogger", so it would remain in active state (launched) and there would be no duplicate processes.
 
-Things to be done (In progress):
+Currently program will write only Latin intercepted characters based on QWERTY layout, even if user is using russian layout, for this case there was Mapper program created. 
+There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language! Use Mappers or create your own for other languages. 
+
+Things to be done:
 1. For "KeyLoggerMonitor" - in case if "NotAKeyLogger" is not existing on machine, then download it from server and launch it.
 2. (QUESTIONABLE) Self encryption + .dll contents encryption and polymorphic code (to be less detectable)
 3. Signature, filename change, icon change (Disguise)
