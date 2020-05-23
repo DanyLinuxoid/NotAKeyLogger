@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------------------------
+BETA 0.6
+
+1. Added posibility to send executable file in binary format from server to client once it is requested.
+2. Some memory leak fixes
+3. Fixed bug with log writing
+---------------------------------------------------------------------------------------------------------------------
 BETA 0.5
 
 1. Added possibility to send .dll files with intercepted keys via sockets to server.
