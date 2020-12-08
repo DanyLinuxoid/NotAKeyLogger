@@ -17,7 +17,7 @@ This small malware consists of two .exe files, both are MOSTLY standalone.
 - This is the one, that must be launched by user (would be best option)
 - Checks if file presents on computer in specific path, if not, then it downloads file from socket server on required path and launches it.
 - Able to write itself in registry as well during startup
-- After launch, watches after so it would remain in active/launched state.
+- After launch, watches after main KeyLogger so it would remain in active/launched state.
 - During runtime checks for duplicate "NotAKeyLogger" processes, not to launch multiple/multiple times.
 
 ## USAGE
