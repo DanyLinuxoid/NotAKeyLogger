@@ -27,6 +27,9 @@ This small malware consists of two .exe files, both are MOSTLY standalone.
 3. **YOU HAVE TO TEST IF IT WORKS FOR YOU AND RUN IT ON SOME TEST ENVIRONMENT** 
 4. Then you can just send KeyLoggerMonitor.exe to victim.
 
+## PERFOMANCE
+Although there are a lot of readings in google about keylogger/ings with windows LowKeyHooks(poor and detectable method compared with .dll method) are slow as hell, this keylogger after 0.5 BETA had perfomance improvement in main key listener loop. Currently on I5-7300HQ processor and SSD-256 hard drive, during logging, 90% of time task manager is showing 0% in CPU tag and sometimes it rises up to 0.3%, quite decent for keylogger which listens for all key hooks :)
+
 **IF you're a developer and want to change things**
 Some MASM32 and 'C' basics required. 
 Code is commented, so you can dig your way through and change it as you wish.
