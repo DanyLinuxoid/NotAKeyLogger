@@ -1,6 +1,6 @@
 # **NotAKeyLogger**
 
-Beta 0.6
+Beta 0.65
 
 Simply implemented keylogger written in MASM32 with minimum set of macros and other helper programs.
 Why MASM32 - This is the only one that is fully integrated in Visual Studio (IMO best IDE).
@@ -33,11 +33,10 @@ Code is commented, so you can dig your way through and change it as you wish.
 
 ## DISADVANTAGES:
 1. Currently program will write only Latin intercepted characters based on QWERTY layout, even if user is using russian layout, for this case there was Mapper program created. 
-There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language (this will decrease perfomance + requires A LOT of code space for junky character sets and comparisons)! Use Mappers or create your own for other languages. 
-2. Currently, if Windows language is set to any other than English, program will be unable to construct path for files and will not work properly (because in code it has English hardcoded path parts). This can be solved by hardcoding path parts for other languages as well and then based on Windows language use needed parts.
+There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language (this will decrease perfomance + requires A LOT of code space for junky character sets and comparisons)! Use Mappers or create your own for other languages.
 
 Things to be done:
-1. (QUESTIONABLE) Self encryption + .dll contents encryption and polymorphic code (to be less detectable)
-2. Signature, filename change, icon change (Disguise)
+1. Polymorphic code
+2. Signature, filename change, icon change, process name change
 
 Fun Fact: Currently "Kaspersky" with highest security settings detects both programms as "HEUR:Trojan.Win32.Generic"
