@@ -11,7 +11,7 @@ This small malware consists of two .exe files, both are MOSTLY standalone.
 - Is able to check if duplicate processes exist, if exists, then it self-terminates.
 - During application startup sends file with intercepted keys to server via sockets.
 - Writes itself in registry(autostartup)
-- Then intercepts user pressed keys and writes them to file with .dll extension
+- Then intercepts user pressed keys, encrypts them and writes to file with .dll extension
 
 ---- Second program is "KeyLoggerMonitor", manager/monitor for "NotAKeyLogger". 
 - This is the one, that must be launched by user (would be best option)
