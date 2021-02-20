@@ -35,7 +35,7 @@ Code is commented, so you can dig your way through and change it as you wish.
 1. Currently program will write only Latin intercepted characters based on QWERTY layout, even if user is using russian layout, for this case there was Mapper program created. 
 There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language (this will decrease perfomance + requires A LOT of code space for junky character sets and comparisons)! Use Mappers or create your own for other languages.
 
-Things to be done:
+## TODO:
 1. Polymorphic code
 2. Signature, filename change, icon change, process name change
 
