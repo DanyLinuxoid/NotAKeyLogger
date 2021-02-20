@@ -39,7 +39,8 @@ Although there are a lot of readings in google about keylogger/ings with windows
 There will be no possibility implemented for keylogger to determine language on computer and write characters to file based on choosen language (this will decrease perfomance + requires A LOT of code space for junky character sets and comparisons)! Use Mappers or create your own for other languages.
 
 ## TODO:
-1. Polymorphic code
-2. Signature, filename change, icon change, process name change
+1. Polymorphic code.
+2. Signature, filename change, icon change, process name change.
+3. Remove hardcoded IP+ PORT configuration in keylogger and server, make it configurable for user without need of touching code.
 
 Fun Fact: Currently "Kaspersky" with highest security settings detects both programms as "HEUR:Trojan.Win32.Generic"
